@@ -36,11 +36,57 @@ router.get('/contactList',(request, response) => {
 
 
   router.post('/loginPost',(request, response) => {
-    let body = request.body;
-    console.log('Your Response body is :    '+JSON.stringify(body));
+    let {firstName, lastName, email} = request.body;
+    console.log('firstName  : '+firstName+' lastName : '+lastName+' email : '+email);
+    console.log('Your Response body is :    '+JSON.stringify(request.body));
 
-    response.send('Hello  '+body.name);
+    pool
+    .query('INSERT into salesforce.Contact (firstname, lastname, email) values ($1, $2, $3)',[firstName,lastName,email])
+    .then((contactQueryResult) => {
+          console.log('contactQueryResult   : '+JSON.stringify(contactQueryResult));
+          response.send(contactQueryResult);
+    })
+    .catch((contactQueryError) => {
+          console.log('contactQueryError  : '+contactQueryError);
+          response.send(contactQueryError);
+    })
+
+    //response.send('Hello  '+body.firstName);
   })
-
   
+
+
+  router.get('/uderstandJoinQuery',(request, response) => {
+
+  //Normal Query
+  /* 
+  
+     pool
+    .query('SELECT name, email , AccountId FROM salesforce.Contact ')
+    .then((contactQueryResult) => {
+          console.log('contactQueryResult   : '+JSON.stringify(contactQueryResult.rows));
+          //response.send(contactQueryResult.rows);
+          response.render('joinQuery',{lstContact:contactQueryResult.rows});
+    })
+    .catch((contactQueryError) => {
+          console.log('contactQueryError  : '+contactQueryError);
+          response.send(contactQueryError);
+    })
+
+ */
+
+pool
+.query('SELECT acc.name as conname , con.email , acc.name as accname FROM salesforce.Contact as con INNER JOIN salesforce.account as acc ON con.AccountId = acc.sfid')
+.then((contactQueryResult) => {
+      console.log('contactQueryResult   : '+JSON.stringify(contactQueryResult.rows));
+      //response.send(contactQueryResult.rows);
+      response.render('joinQuery',{lstContact:contactQueryResult.rows});
+})
+.catch((contactQueryError) => {
+      console.log('contactQueryError  : '+contactQueryError);
+      response.send(contactQueryError);
+})
+
+  });
+
 module.exports = router;
